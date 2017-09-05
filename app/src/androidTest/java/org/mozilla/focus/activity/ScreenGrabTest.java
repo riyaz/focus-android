@@ -323,6 +323,7 @@ public class ScreenGrabTest {
         openNewTabTitle.click();
         TestHelper.webView.waitForExists(waitingTime);
         multiTabBtn.click();
+        eraseHistoryBtn.waitForExists(waitingTime);
         Screengrab.screenshot("Multi_Tab_Menu");
         eraseHistoryBtn.click();
 
