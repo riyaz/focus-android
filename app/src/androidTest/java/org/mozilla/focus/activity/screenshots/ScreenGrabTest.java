@@ -27,7 +27,6 @@ import org.junit.runner.RunWith;
 import org.mozilla.focus.R;
 import org.mozilla.focus.activity.MainActivity;
 import org.mozilla.focus.activity.TestHelper;
-import org.mozilla.focus.activity.helpers.HostScreencapScreenshotStrategy;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -35,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import tools.fastlane.screengrab.Screengrab;
+import tools.fastlane.screengrab.UiAutomatorScreenshotStrategy;
 import tools.fastlane.screengrab.locale.LocaleTestRule;
 
 import static android.support.test.espresso.Espresso.onData;
@@ -151,8 +151,8 @@ public class ScreenGrabTest {
         final UiDevice device = UiDevice.getInstance(instrumentation);
 
         // Use this to switch between default strategy and HostScreencap strategy
-        //Screengrab.setDefaultScreenshotStrategy(new UiAutomatorScreenshotStrategy());
-        Screengrab.setDefaultScreenshotStrategy(new HostScreencapScreenshotStrategy(device));
+        Screengrab.setDefaultScreenshotStrategy(new UiAutomatorScreenshotStrategy());
+        //Screengrab.setDefaultScreenshotStrategy(new HostScreencapScreenshotStrategy(device));
 
         takeScreenshotsOfFirstrun(context, device);
 
@@ -171,7 +171,7 @@ public class ScreenGrabTest {
 
         // Temporarily disabled: Our emulator image doesn't include Google Play - So we can't take
         // a screenshot of this dialog.
-        // takeScreenshotOfGooglePlayDialog(device);
+        takeScreenshotOfGooglePlayDialog(device);
 
         takeScreenshotOfContextMenu(context, device);
         takeScreenshotOfErrorPages(context, device);
@@ -500,8 +500,6 @@ public class ScreenGrabTest {
         assertTrue(cancelBtn.waitForExists(waitingTime));
         Screengrab.screenshot("Redirect_Outside");
         cancelBtn.click();
-
-        assertTrue(TestHelper.inlineAutocompleteEditText.waitForExists(waitingTime));
         device.pressBack();
     }
 
