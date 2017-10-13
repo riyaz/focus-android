@@ -27,6 +27,7 @@ import org.junit.runner.RunWith;
 import org.mozilla.focus.R;
 import org.mozilla.focus.activity.MainActivity;
 import org.mozilla.focus.activity.TestHelper;
+import org.mozilla.focus.activity.helpers.HostScreencapScreenshotStrategy;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import tools.fastlane.screengrab.Screengrab;
-import tools.fastlane.screengrab.UiAutomatorScreenshotStrategy;
 import tools.fastlane.screengrab.locale.LocaleTestRule;
 
 import static android.support.test.espresso.Espresso.onData;
@@ -151,8 +151,8 @@ public class ScreenGrabTest {
         final UiDevice device = UiDevice.getInstance(instrumentation);
 
         // Use this to switch between default strategy and HostScreencap strategy
-        Screengrab.setDefaultScreenshotStrategy(new UiAutomatorScreenshotStrategy());
-        //Screengrab.setDefaultScreenshotStrategy(new HostScreencapScreenshotStrategy(device));
+        //Screengrab.setDefaultScreenshotStrategy(new UiAutomatorScreenshotStrategy());
+        Screengrab.setDefaultScreenshotStrategy(new HostScreencapScreenshotStrategy(device));
 
         takeScreenshotsOfFirstrun(context, device);
 
@@ -171,7 +171,7 @@ public class ScreenGrabTest {
 
         // Temporarily disabled: Our emulator image doesn't include Google Play - So we can't take
         // a screenshot of this dialog.
-        takeScreenshotOfGooglePlayDialog(device);
+        // takeScreenshotOfGooglePlayDialog(device);
 
         takeScreenshotOfContextMenu(context, device);
         takeScreenshotOfErrorPages(context, device);
@@ -258,7 +258,7 @@ public class ScreenGrabTest {
     }
 
     private void takeScreenshotOfYourRightsPage(Context context, UiDevice device) throws UiObjectNotFoundException {
-        final String yourRightsLabel = context.getString(R.string.your_rights);
+        final String yourRightsLabel = context.getString(R.string.menu_rights);
 
         assertTrue(device.findObject(new UiSelector()
                 .text(yourRightsLabel)
@@ -519,8 +519,7 @@ public class ScreenGrabTest {
 
             TestHelper.inlineAutocompleteEditText.setText("error:" + error.value);
             device.pressKeyCode(KEYCODE_ENTER);
-
-            assertTrue(TestHelper.webView.waitForExists(waitingTime));
+            assertTrue(TestHelper.progressBar.waitUntilGone(waitingTime));
 
             // Android O has an issue with using Locator.ID
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -528,13 +527,15 @@ public class ScreenGrabTest {
                         .descriptionContains(context.getString(R.string.errorpage_refresh))
                         .clickable(true));
                 assertTrue(tryAgainBtn.waitForExists(waitingTime));
+
             } else {
 
                 onWebView()
                         .withElement(findElement(Locator.ID, "errorTryAgain"))
                         .perform(webScrollIntoView());
             }
-            Screengrab.screenshot(error.name());
+
+  Screengrab.screenshot(error.name());
             browserURLbar.click();
         }
     }

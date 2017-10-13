@@ -55,7 +55,7 @@ public class HostScreencapScreenshotStrategy implements ScreenshotStrategy {
             bitmap = createDummyScreenShot();
         }
 
-        screenshotCallback.screenshotCaptured(screenshotName, bitmap);
+        //screenshotCallback.screenshotCaptured(screenshotName, bitmap);
     }
 
     private void takeScreenshotViaHost(String name) {
