@@ -234,6 +234,11 @@ public class ScreenGrabTest {
     private void takeScreenshotOfAboutPage(Context context, UiDevice device) throws UiObjectNotFoundException {
         final String aboutLabel = context.getString(R.string.preference_about, context.getString(R.string.app_name));
 
+        assertTrue(device.findObject(new UiSelector()
+                .text(aboutLabel)
+                .enabled(true)
+        ).waitForExists(waitingTime));
+
         onData(withTitleText(aboutLabel))
                 .check(matches(isDisplayed()))
                 .perform(click());
@@ -254,6 +259,11 @@ public class ScreenGrabTest {
 
     private void takeScreenshotOfYourRightsPage(Context context, UiDevice device) throws UiObjectNotFoundException {
         final String yourRightsLabel = context.getString(R.string.your_rights);
+
+        assertTrue(device.findObject(new UiSelector()
+                .text(yourRightsLabel)
+                .enabled(true)
+        ).waitForExists(waitingTime));
 
         onData(withTitleText(yourRightsLabel))
                 .check(matches(isDisplayed()))
@@ -519,9 +529,6 @@ public class ScreenGrabTest {
                         .clickable(true));
                 assertTrue(tryAgainBtn.waitForExists(waitingTime));
             } else {
-                onWebView()
-                        .withElement(findElement(Locator.ID, "errorTitle"))
-                        .perform(webClick());
 
                 onWebView()
                         .withElement(findElement(Locator.ID, "errorTryAgain"))
