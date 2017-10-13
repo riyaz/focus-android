@@ -183,7 +183,7 @@ public class SwitchLocaleTest {
         changeLocale("fr");
         TestHelper.inlineAutocompleteEditText.waitForExists(waitingTime);
 
-        openMenu();
+        openSettings();
         LanguageSelection.waitForExists(waitingTime);
 
         /* system locale is in French, check it is now set to system locale */

@@ -174,7 +174,7 @@ public final class TestHelper {
             .enabled(true));
     public static UiObject settingsMenuItem = mDevice.findObject(new UiSelector()
             .className("android.widget.LinearLayout")
-            .instance(3));
+            .instance(2));
     static UiObject blockCounterItem = mDevice.findObject(new UiSelector()
             .resourceId("org.mozilla.focus.debug:id/trackers_count"));
     static UiObject blockToggleSwitch = mDevice.findObject(new UiSelector()
