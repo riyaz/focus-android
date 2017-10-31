@@ -37,6 +37,8 @@ public final class AppConstants {
         return true;
     }
 
+    public static final boolean FLAG_MANUAL_SEARCH_ENGINE = isDevBuild();
+
     public static boolean piMode() {
         return PI_MODE;
     }
