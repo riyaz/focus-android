@@ -37,7 +37,9 @@ public class FocusApplication extends LocaleAwareApplication {
         SearchEngineManager.getInstance().init(this);
 
         TelemetryWrapper.init(this);
-        AdjustHelper.setupAdjustIfNeeded(this);
+        if(!AppConstants.piMode()) {
+            AdjustHelper.setupAdjustIfNeeded(this);
+        }
 
         registerActivityLifecycleCallbacks(visibilityLifeCycleCallback = new VisibilityLifeCycleCallback(this));
 

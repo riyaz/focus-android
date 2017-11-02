@@ -13,6 +13,7 @@ public final class AppConstants {
     private static final String BUILD_TYPE_RELEASE = "release";
 
     private static final String PRODUCT_FLAVOR_KLAR = "klar";
+    private static final boolean PI_MODE = true;
 
     private AppConstants() {}
 
@@ -34,5 +35,9 @@ public final class AppConstants {
 
     public static boolean supportsDownloadingFiles() {
         return true;
+    }
+
+    public static boolean piMode() {
+        return PI_MODE;
     }
 }

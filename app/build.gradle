@@ -10,9 +10,22 @@ apply plugin: 'kotlin-kapt'
 
 apply from: "$project.rootDir/tools/gradle/versionCode.gradle"
 
+Properties signProps = new Properties()
+signProps.load(new FileInputStream(file('signing.properties')))
+
 android {
+
+    signingConfigs {
+        release {
+            storeFile file(signProps["STORE_FILE"])
+            storePassword signProps["STORE_PASSWORD"]
+            keyAlias signProps["KEY_ALIAS"]
+            keyPassword signProps["KEY_PASSWORD"]
+        }
+    }
+
     compileSdkVersion 26
-    buildToolsVersion "26.0.1"
+    buildToolsVersion '26.0.2'
     defaultConfig {
         applicationId "org.mozilla"
         minSdkVersion 21
@@ -36,6 +49,7 @@ android {
         release {
             minifyEnabled true
             shrinkResources true
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         beta {
@@ -73,7 +87,7 @@ android {
         focus {
             dimension "product"
 
-            applicationIdSuffix ".focus"
+            applicationIdSuffix ".pi"
         }
         klar {
             dimension "product"

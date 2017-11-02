@@ -41,6 +41,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.mozilla.focus.BuildConfig;
 import org.mozilla.focus.R;
 import org.mozilla.focus.activity.InfoActivity;
 import org.mozilla.focus.activity.InstallFirefoxActivity;
@@ -59,6 +60,7 @@ import org.mozilla.focus.session.SessionManager;
 import org.mozilla.focus.session.Source;
 import org.mozilla.focus.session.ui.SessionsSheetFragment;
 import org.mozilla.focus.telemetry.TelemetryWrapper;
+import org.mozilla.focus.utils.AppConstants;
 import org.mozilla.focus.utils.Browsers;
 import org.mozilla.focus.utils.ColorUtils;
 import org.mozilla.focus.utils.DownloadUtils;
@@ -72,7 +74,6 @@ import org.mozilla.focus.widget.FloatingSessionsButton;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
-
 /**
  * Fragment for displaying the browser UI.
  */
@@ -401,7 +402,11 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
     public IWebView.Callback createCallback() {
         return new SessionCallbackProxy(session, new IWebView.Callback() {
             @Override
-            public void onPageStarted(final String url) {}
+            public void onPageStarted(final String url) {
+                if(AppConstants.piMode()) {
+                    launchDefaultApp();
+                }
+            }
 
             @Override
             public void onPageFinished(boolean isSecure) {}
@@ -870,6 +875,34 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
                 showAddToHomescreenDialog(url, title);
                 break;
 
+            case R.id.open_with_chrome: {
+                final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(getUrl()));
+                intent.setPackage("com.android.chrome");
+                startActivity(intent);
+                break;
+            }
+
+            case R.id.add_to_inbox: {
+                Intent intent = new Intent(android.content.Intent.ACTION_SEND);
+                intent.setClassName("com.google.android.apps.inbox",
+                    "com.google.android.apps.bigtop.saveforlater.ShareHandlerActivity");
+                intent.setType("text/plain");
+                intent.putExtra(Intent.EXTRA_TEXT, getUrl());
+                startActivity(intent);
+                break;
+            }
+
+            case R.id.add_to_pocket: {
+                Intent intent = new Intent(Intent.ACTION_SEND);
+                intent.setClassName("com.ideashower.readitlater.pro",
+                    "com.ideashower.readitlater.activity.AddActivity");
+                intent.setType("text/plain");
+                intent.putExtra(Intent.EXTRA_TEXT, getUrl());
+                startActivity(intent);
+                break;
+            }
+
+
             default:
                 throw new IllegalArgumentException("Unhandled menu item in BrowserFragment");
         }
@@ -958,6 +991,26 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
             backgroundTransitionGroup = new TransitionDrawableGroup(
                     (TransitionDrawable) statusBar.getBackground()
             );
+        }
+    }
+
+    private void launchDefaultApp() {
+        final Browsers browsers = new Browsers(getContext(), getUrl());
+
+        final ActivityInfo defaultBrowser = browsers.getDefaultBrowser();
+
+        if (defaultBrowser != null && !defaultBrowser.packageName.equals(BuildConfig.APPLICATION_ID)) {
+
+            final IWebView webView = getWebView();
+            if (webView != null) {
+                webView.stopLoading();
+            }
+
+            final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(getUrl()));
+            intent.setPackage(defaultBrowser.packageName);
+            String appName = defaultBrowser.loadLabel(getActivity().getPackageManager()).toString();
+            Toast.makeText(getActivity(), "Launching default app " + appName, Toast.LENGTH_LONG).show();
+            startActivity(intent);
         }
     }
 

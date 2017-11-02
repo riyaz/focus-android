@@ -20,6 +20,7 @@ import android.support.v4.content.ContextCompat;
 import org.mozilla.focus.R;
 import org.mozilla.focus.activity.MainActivity;
 import org.mozilla.focus.telemetry.TelemetryWrapper;
+import org.mozilla.focus.utils.AppConstants;
 
 /**
  * As long as a session is active this service will keep the notification (and our process) alive.
@@ -33,6 +34,7 @@ public class SessionNotificationService extends Service {
     private static final String ACTION_ERASE = "erase";
 
     /* package */ static void start(Context context) {
+        if(AppConstants.piMode()) return;
         final Intent intent = new Intent(context, SessionNotificationService.class);
         intent.setAction(ACTION_START);
 
@@ -44,6 +46,8 @@ public class SessionNotificationService extends Service {
     }
 
     /* package */ static void stop(Context context) {
+        if(AppConstants.piMode()) return;
+
         final Intent intent = new Intent(context, SessionNotificationService.class);
 
         context.stopService(intent);
