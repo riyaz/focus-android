@@ -1024,6 +1024,8 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
             String appName = defaultBrowser.loadLabel(getActivity().getPackageManager()).toString();
             Toast.makeText(getActivity(), "Launching default app " + appName, Toast.LENGTH_LONG).show();
             startActivity(intent);
+            SessionManager.getInstance().removeAllSessions();
+            getActivity().finish();
         }
     }
 
