@@ -216,6 +216,8 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
             @Override
             public void onRefresh() {
                 reload();
+
+                TelemetryWrapper.swipeReloadEvent();
             }
         });
 
@@ -800,6 +802,8 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
 
             case R.id.refresh: {
                 reload();
+
+                TelemetryWrapper.menuReloadEvent();
                 break;
             }
 
