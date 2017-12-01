@@ -212,7 +212,7 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
 
         swipeRefresh = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh);
         swipeRefresh.setColorSchemeResources(R.color.colorAccent);
-        swipeRefresh.setEnabled(Features.SWIPE_TO_REFERSH);
+        swipeRefresh.setEnabled(Features.SWIPE_TO_REFRESH);
 
         swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
