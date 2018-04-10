@@ -343,6 +343,14 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
 
         final FloatingSessionsButton tabsButton = view.findViewById(R.id.tabs);
         tabsButton.setOnClickListener(this);
+        //PI
+        tabsButton.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                SessionManager.getInstance().removeAllSessions();
+                return true;
+            }
+        });
 
         sessionManager.getSessions().observe(this, new NonNullObserver<List<Session>>() {
             @Override
@@ -780,7 +788,9 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
 
                 // This session has been started from a VIEW intent. Go back to the previous app
                 // immediately and erase the current browsing session.
-                erase();
+                if (!AppConstants.piMode()) {
+                    erase();
+                }
 
                 // If there are no other sessions then we remove the whole task because otherwise
                 // the old session might still be partially visible in the app switcher.
@@ -790,13 +800,17 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
                     getActivity().finish();
                 }
 
-                // We can't show a snackbar outside of the app. So let's show a toast instead.
-                Toast.makeText(getContext(), R.string.feedback_erase, Toast.LENGTH_SHORT).show();
+                if (!AppConstants.piMode()) {
+                    // We can't show a snackbar outside of the app. So let's show a toast instead.
+                    Toast.makeText(getContext(), R.string.feedback_erase, Toast.LENGTH_SHORT).show();
+                }
             } else {
                 // Just go back to the home screen.
                 TelemetryWrapper.eraseBackToHomeEvent();
 
-                erase();
+                if (!AppConstants.piMode()) {
+                    erase();
+                }
             }
         }
 
