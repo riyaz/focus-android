@@ -16,16 +16,22 @@ import android.support.customtabs.CustomTabsIntent;
 import android.util.Log;
 
 import org.mozilla.focus.R;
-import org.mozilla.focus.utils.SafeBundle;
-import org.mozilla.focus.utils.SafeIntent;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import mozilla.components.utils.SafeBundle;
+import mozilla.components.utils.SafeIntent;
+
 public class CustomTabConfig {
     private static final String LOGTAG = "CustomTabConfig";
+
+    /**
+     * This Intent extra is used internally to reference a specific custom tab.
+     */
+    public static final String EXTRA_CUSTOM_TAB_ID = "org.mozilla.focus.custom-tab-id";
 
     public static final class ActionButtonConfig {
         public final @NonNull String description;
@@ -51,6 +57,7 @@ public class CustomTabConfig {
         }
     }
 
+    public final @NonNull String id;
     public final @Nullable @ColorInt Integer toolbarColor;
     public final @Nullable Bitmap closeButtonIcon;
     public final boolean disableUrlbarHiding;
@@ -62,6 +69,7 @@ public class CustomTabConfig {
     private final @NonNull List<String> unsupportedFeatureList;
 
     /* package-private */ CustomTabConfig(
+            final @NonNull String id,
             final @Nullable @ColorInt Integer toolbarColor,
             final @Nullable Bitmap closeButtonIcon,
             final boolean disableUrlbarHiding,
@@ -69,6 +77,7 @@ public class CustomTabConfig {
             final boolean showShareMenuItem,
             final @NonNull List<CustomTabMenuItem> menuItems,
             final @NonNull List<String> unsupportedFeatureList) {
+        this.id = id;
         this.toolbarColor = toolbarColor;
         this.closeButtonIcon = closeButtonIcon;
         this.disableUrlbarHiding = disableUrlbarHiding;
@@ -145,6 +154,12 @@ public class CustomTabConfig {
     }
 
     public static CustomTabConfig parseCustomTabIntent(final @NonNull Context context, final @NonNull SafeIntent intent) {
+        if (!intent.hasExtra(EXTRA_CUSTOM_TAB_ID)) {
+            throw new IllegalArgumentException("This custom tab intent  has no ID assigned");
+        }
+
+        final String id = intent.getStringExtra(EXTRA_CUSTOM_TAB_ID);
+
         @ColorInt Integer toolbarColor = null;
         if (intent.hasExtra(CustomTabsIntent.EXTRA_TOOLBAR_COLOR)) {
             toolbarColor = intent.getIntExtra(CustomTabsIntent.EXTRA_TOOLBAR_COLOR, -1);
@@ -163,7 +178,7 @@ public class CustomTabConfig {
         // Share is part of the default menu, so it's simplest just to toggle it off as necessary instead
         // of creating a fake menu item here, hence we keep this as  aboolean for now:
         final boolean showShareMenuItem = intent.getBooleanExtra(CustomTabsIntent.EXTRA_DEFAULT_SHARE_MENU_ITEM,
-                // Other than Chrome we will show the share menu by default. Note that currently the
+                // Unlike Chrome we will show the share menu by default. Note that currently the
                 // Custom Tabs support library has no option to explicitly hide this menu item. So
                 // setting the default to 'true' will show this menu item for all custom tabs.
                 true);
@@ -246,7 +261,15 @@ public class CustomTabConfig {
             }
         }
 
-        return new CustomTabConfig(toolbarColor, closeButtonIcon, disableUrlbarHiding, actionButtonConfig, showShareMenuItem, menuItems, unsupportedFeatureList);
+        return new CustomTabConfig(
+                id,
+                toolbarColor,
+                closeButtonIcon,
+                disableUrlbarHiding,
+                actionButtonConfig,
+                showShareMenuItem,
+                menuItems,
+                unsupportedFeatureList);
     }
 
     /**

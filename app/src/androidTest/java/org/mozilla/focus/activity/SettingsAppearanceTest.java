@@ -18,11 +18,12 @@ import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mozilla.focus.helpers.TestHelper;
 
 import static junit.framework.Assert.assertTrue;
-import static org.mozilla.focus.activity.TestHelper.waitingTime;
-import static org.mozilla.focus.activity.helpers.EspressoHelper.openSettings;
 import static org.mozilla.focus.fragment.FirstrunFragment.FIRSTRUN_PREF;
+import static org.mozilla.focus.helpers.EspressoHelper.openSettings;
+import static org.mozilla.focus.helpers.TestHelper.waitingTime;
 
 // This test checks all the headings in the Settings menu are there
 @RunWith(AndroidJUnit4.class)

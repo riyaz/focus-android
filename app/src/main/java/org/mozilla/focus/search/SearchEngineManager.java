@@ -18,7 +18,6 @@ import android.util.Log;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.mozilla.focus.ext.AssetManagerKt;
 import org.mozilla.focus.locale.Locales;
 import org.mozilla.focus.shortcut.IconGenerator;
 import org.mozilla.focus.utils.BitmapUtils;
@@ -53,6 +52,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import mozilla.components.ktx.android.content.res.AssetManagerKt;
 
 public class SearchEngineManager extends BroadcastReceiver {
     private static final String LOG_TAG = SearchEngineManager.class.getSimpleName();
@@ -241,6 +241,7 @@ public class SearchEngineManager extends BroadcastReceiver {
         try {
             for (String engine : engines) {
                 final InputStream engineInputStream = new ByteArrayInputStream(prefs.getString(engine, "").getBytes(StandardCharsets.UTF_8));
+                // Search engine identifier is the search engine name.
                 customEngines.add(SearchEngineParser.load(engine, engineInputStream));
             }
         } catch (IOException e) {

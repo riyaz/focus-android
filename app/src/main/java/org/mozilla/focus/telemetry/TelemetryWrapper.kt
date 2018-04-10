@@ -37,6 +37,7 @@ import org.mozilla.telemetry.storage.FileTelemetryStorage
 object TelemetryWrapper {
     private const val TELEMETRY_APP_NAME_FOCUS = "Focus"
     private const val TELEMETRY_APP_NAME_KLAR = "Klar"
+    private const val TELEMETRY_APP_ENGINE_GECKOVIEW = "GeckoView"
 
     private const val MAXIMUM_CUSTOM_TAB_EXTRAS = 10
 
@@ -130,6 +131,7 @@ object TelemetryWrapper {
         val WHATS_NEW = "whats_new"
         val RESUME = "resume"
         val RELOAD = "refresh"
+        val FULL_BROWSER = "full_browser"
     }
 
     private object Extra {
@@ -142,6 +144,7 @@ object TelemetryWrapper {
         val SOURCE = "source"
         val SUCCESS = "success"
         val ERROR_CODE = "error_code"
+        val AVERAGE = "average"
     }
 
     @JvmStatic
@@ -193,6 +196,7 @@ object TelemetryWrapper {
                             resources.getString(R.string.pref_key_privacy_block_analytics),
                             resources.getString(R.string.pref_key_privacy_block_social),
                             resources.getString(R.string.pref_key_privacy_block_other),
+                            resources.getString(R.string.pref_key_performance_block_javascript),
                             resources.getString(R.string.pref_key_performance_block_webfonts),
                             resources.getString(R.string.pref_key_locale),
                             resources.getString(R.string.pref_key_secure),
@@ -202,6 +206,9 @@ object TelemetryWrapper {
                     .setSettingsProvider(TelemetrySettingsProvider(context))
                     .setCollectionEnabled(telemetryEnabled)
                     .setUploadEnabled(telemetryEnabled)
+                    .setBuildId(TelemetryConfiguration(context).buildId +
+                    (if (AppConstants.isGeckoBuild())
+                        ("-" + TELEMETRY_APP_ENGINE_GECKOVIEW) else ""))
 
             val serializer = JSONPingSerializer()
             val storage = FileTelemetryStorage(configuration, serializer)
@@ -246,9 +253,30 @@ object TelemetryWrapper {
         TelemetryEvent.create(Category.ACTION, Method.FOREGROUND, Object.APP).queue()
     }
 
+    private var numLoads: Int = 0
+    private var averageTime: Double = 0.0
+
+    @JvmStatic
+    fun addLoadToAverage(newLoadTime: Long) {
+        numLoads++
+        averageTime += (newLoadTime - averageTime) / numLoads
+    }
+
+    @JvmStatic
+    private fun resetAverageLoad() {
+        numLoads = 0
+        averageTime = 0.0
+    }
+
     @JvmStatic
     fun stopSession() {
         TelemetryHolder.get().recordSessionEnd()
+
+        if (numLoads > 0) {
+            TelemetryEvent.create(Category.ACTION, Method.FOREGROUND, Object.BROWSER)
+                    .extra(Extra.AVERAGE, averageTime.toString()).queue()
+            resetAverageLoad()
+        }
 
         TelemetryEvent.create(Category.ACTION, Method.BACKGROUND, Object.APP).queue()
     }
@@ -497,6 +525,14 @@ object TelemetryWrapper {
     @JvmStatic
     fun openDefaultAppEvent() {
         TelemetryEvent.create(Category.ACTION, Method.OPEN, Object.MENU, Value.DEFAULT).queue()
+    }
+
+    /**
+     * Switching from a custom tab to the full-featured browser (regular tab).
+     */
+    @JvmStatic
+    fun openFullBrowser() {
+        TelemetryEvent.create(Category.ACTION, Method.OPEN, Object.MENU, Value.FULL_BROWSER).queue()
     }
 
     @JvmStatic

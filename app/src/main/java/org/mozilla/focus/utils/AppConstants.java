@@ -13,6 +13,7 @@ public final class AppConstants {
     private static final String BUILD_TYPE_RELEASE = "release";
 
     private static final String PRODUCT_FLAVOR_KLAR = "klar";
+    private static final String ENGINE_FLAVOR_GECKO = "gecko";
     private static final boolean PI_MODE = true;
 
     private AppConstants() {}
@@ -29,6 +30,10 @@ public final class AppConstants {
         return BUILD_TYPE_RELEASE.equals(BuildConfig.BUILD_TYPE);
     }
 
+    public static boolean isGeckoBuild() {
+        return BuildConfig.FLAVOR_engine.equals(ENGINE_FLAVOR_GECKO);
+    }
+
     public static boolean isBetaBuild() {
         return BUILD_TYPE_BETA.equals(BuildConfig.BUILD_TYPE);
     }
@@ -36,8 +41,6 @@ public final class AppConstants {
     public static boolean supportsDownloadingFiles() {
         return true;
     }
-
-    public static final boolean FLAG_MANUAL_SEARCH_ENGINE = isDevBuild();
 
     public static boolean piMode() {
         return PI_MODE;

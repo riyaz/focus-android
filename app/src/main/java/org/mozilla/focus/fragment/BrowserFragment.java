@@ -30,22 +30,29 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
+import android.webkit.URLUtil;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import java.lang.ref.WeakReference;
+import java.util.List;
+import mozilla.components.utils.ColorUtils;
+import mozilla.components.utils.DownloadUtils;
+import mozilla.components.utils.DrawableUtils;
 import org.mozilla.focus.BuildConfig;
 import org.mozilla.focus.R;
-import org.mozilla.focus.activity.InfoActivity;
 import org.mozilla.focus.activity.InstallFirefoxActivity;
+import org.mozilla.focus.activity.MainActivity;
 import org.mozilla.focus.animation.TransitionDrawableGroup;
 import org.mozilla.focus.architecture.NonNullObserver;
 import org.mozilla.focus.broadcastreceiver.DownloadBroadcastReceiver;
@@ -53,7 +60,9 @@ import org.mozilla.focus.customtabs.CustomTabConfig;
 import org.mozilla.focus.locale.LocaleAwareAppCompatActivity;
 import org.mozilla.focus.menu.browser.BrowserMenu;
 import org.mozilla.focus.menu.context.WebContextMenu;
+import org.mozilla.focus.observer.AverageLoadTimeObserver;
 import org.mozilla.focus.open.OpenWithFragment;
+import org.mozilla.focus.popup.PopupUtils;
 import org.mozilla.focus.session.NullSession;
 import org.mozilla.focus.session.Session;
 import org.mozilla.focus.session.SessionCallbackProxy;
@@ -63,10 +72,9 @@ import org.mozilla.focus.session.ui.SessionsSheetFragment;
 import org.mozilla.focus.telemetry.TelemetryWrapper;
 import org.mozilla.focus.utils.AppConstants;
 import org.mozilla.focus.utils.Browsers;
-import org.mozilla.focus.utils.ColorUtils;
-import org.mozilla.focus.utils.DownloadUtils;
-import org.mozilla.focus.utils.DrawableUtils;
 import org.mozilla.focus.utils.Features;
+import org.mozilla.focus.utils.StatusBarUtils;
+import org.mozilla.focus.utils.SupportUtils;
 import org.mozilla.focus.utils.UrlUtils;
 import org.mozilla.focus.web.Download;
 import org.mozilla.focus.web.IWebView;
@@ -74,15 +82,13 @@ import org.mozilla.focus.widget.AnimatedProgressBar;
 import org.mozilla.focus.widget.FloatingEraseButton;
 import org.mozilla.focus.widget.FloatingSessionsButton;
 
-import java.lang.ref.WeakReference;
-import java.util.List;
 /**
  * Fragment for displaying the browser UI.
  */
 public class BrowserFragment extends WebFragment implements View.OnClickListener, DownloadDialogFragment.DownloadDialogListener {
     public static final String FRAGMENT_TAG = "browser";
 
-    private static int REQUEST_CODE_STORAGE_PERMISSION = 101;
+    private static final int REQUEST_CODE_STORAGE_PERMISSION = 101;
     private static final int ANIMATION_DURATION = 300;
 
     private static final String ARGUMENT_SESSION_UUID = "sessionUUID";
@@ -103,10 +109,11 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
     private TextView urlView;
     private AnimatedProgressBar progressView;
     private FrameLayout blockView;
-    private ImageView lockView;
+    private ImageView securityView;
     private ImageButton menuView;
     private View statusBar;
     private View urlBar;
+    private FrameLayout popupTint;
     private SwipeRefreshLayout swipeRefresh;
     private WeakReference<BrowserMenu> menuWeakReference = new WeakReference<>(null);
 
@@ -206,6 +213,8 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
         urlBar = view.findViewById(R.id.urlbar);
         statusBar = view.findViewById(R.id.status_bar_background);
 
+        popupTint = view.findViewById(R.id.popup_tint);
+
         urlView = (TextView) view.findViewById(R.id.display_url);
 
         progressView = (AnimatedProgressBar) view.findViewById(R.id.progress);
@@ -232,6 +241,8 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
 
         setBlockingEnabled(session.isBlockingEnabled());
 
+        session.getLoading().observe(this, new AverageLoadTimeObserver(session));
+
         session.getLoading().observe(this, new NonNullObserver<Boolean>() {
             @Override
             public void onValueChanged(@NonNull Boolean loading) {
@@ -245,7 +256,6 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
                         // We start a transition only if a page was just loading before
                         // allowing to avoid issue #1179
                         backgroundTransitionGroup.startTransition(ANIMATION_DURATION);
-                        progressView.setProgress(progressView.getMax());
                         progressView.setVisibility(View.GONE);
                     }
                     swipeRefresh.setRefreshing(false);
@@ -283,13 +293,28 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
 
         blockView = (FrameLayout) view.findViewById(R.id.block);
 
-        lockView = (ImageView) view.findViewById(R.id.lock);
+        securityView = view.findViewById(R.id.security_info);
         session.getSecure().observe(this, new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean secure) {
-                lockView.setVisibility(secure ? View.VISIBLE : View.GONE);
+                if (!session.getLoading().getValue()) {
+                    if (secure) {
+                        securityView.setImageResource(R.drawable.ic_lock);
+                    } else {
+                        if (URLUtil.isHttpUrl(getUrl())) {
+                            // HTTP site
+                            securityView.setImageResource(R.drawable.ic_internet);
+                        } else {
+                            // Certificate is bad
+                            securityView.setImageResource(R.drawable.ic_warning);
+                        }
+                    }
+                } else {
+                    securityView.setImageResource(R.drawable.ic_internet);
+                }
             }
         });
+        securityView.setOnClickListener(this);
 
         session.getProgress().observe(this, new Observer<Integer>() {
             @Override
@@ -364,7 +389,7 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
             closeButton.setImageBitmap(customTabConfig.closeButtonIcon);
         } else {
             // Always set the icon in case it's been overridden by a previous CT invocation
-            final Drawable closeIcon = DrawableUtils.loadAndTintDrawable(getContext(), R.drawable.ic_close, textColor);
+            final Drawable closeIcon = DrawableUtils.INSTANCE.loadAndTintDrawable(getContext(), R.drawable.ic_close, textColor);
 
             closeButton.setImageDrawable(closeIcon);
         }
@@ -397,13 +422,26 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
                     TelemetryWrapper.customTabActionButtonEvent();
                 }
             });
+        } else {
+            // If the third-party app doesn't provide an action button configuration then we are
+            // going to disable a "Share" button in the toolbar instead.
+
+            final ImageButton shareButton = view.findViewById(R.id.customtab_actionbutton);
+            shareButton.setVisibility(View.VISIBLE);
+            shareButton.setImageDrawable(DrawableUtils.INSTANCE.loadAndTintDrawable(getContext(), R.drawable.ic_share, textColor));
+            shareButton.setContentDescription(getString(R.string.menu_share));
+            shareButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    shareCurrentUrl();
+                }
+            });
         }
 
         // We need to tint some icons.. We already tinted the close button above. Let's tint our other icons too.
-        final Drawable lockIcon = DrawableUtils.loadAndTintDrawable(getContext(), R.drawable.ic_lock, textColor);
-        lockView.setImageDrawable(lockIcon);
+        securityView.setColorFilter(textColor);
 
-        final Drawable menuIcon = DrawableUtils.loadAndTintDrawable(getContext(), R.drawable.ic_menu, textColor);
+        final Drawable menuIcon = DrawableUtils.INSTANCE.loadAndTintDrawable(getContext(), R.drawable.ic_menu, textColor);
         menuView.setImageDrawable(menuIcon);
     }
 
@@ -427,9 +465,11 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
                     launchDefaultApp();
                 }
             }
-
             @Override
             public void onPageFinished(boolean isSecure) {}
+
+            @Override
+            public void onSecurityChanged(boolean isSecure, String host, String organization) {}
 
             @Override
             public void onURLChanged(final String url) {}
@@ -458,6 +498,7 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
             public void onEnterFullScreen(@NonNull final IWebView.FullscreenCallback callback, @Nullable View view) {
                 fullscreenCallback = callback;
 
+                // View is passed in as null for GeckoView fullscreen
                 if (view != null) {
                     // Hide browser UI and web content
                     browserContainer.setVisibility(View.INVISIBLE);
@@ -468,6 +509,11 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
                     videoContainer.addView(view, params);
                     videoContainer.setVisibility(View.VISIBLE);
 
+                    // Switch to immersive mode: Hide system bars other UI controls
+                    switchToImmersiveMode();
+                } else {
+                    // Hide status bar when entering fullscreen with GeckoView
+                    statusBar.setVisibility(View.GONE);
                     // Switch to immersive mode: Hide system bars other UI controls
                     switchToImmersiveMode();
                 }
@@ -481,6 +527,9 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
 
                 // Show browser UI and web content again
                 browserContainer.setVisibility(View.VISIBLE);
+
+                // Show status bar again (hidden in GeckoView versions)
+                statusBar.setVisibility(View.VISIBLE);
 
                 exitImmersiveModeIfNeeded();
 
@@ -668,6 +717,13 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
             showDownloadPromptDialog(pendingDownload);
             pendingDownload = null;
         }
+
+        StatusBarUtils.getStatusBarHeight(statusBar, new StatusBarUtils.StatusBarHeightListener() {
+            @Override
+            public void onStatusBarHeightFetched(int statusBarHeight) {
+                statusBar.getLayoutParams().height = statusBarHeight;
+            }
+        });
     }
 
     /**
@@ -684,7 +740,10 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
         }
 
         final String cookie = CookieManager.getInstance().getCookie(download.getUrl());
-        final String fileName = DownloadUtils.guessFileName(download);
+        final String fileName = DownloadUtils.guessFileName(
+                download.getContentDisposition(),
+                download.getUrl(),
+                download.getMimeType());
 
         final DownloadManager.Request request = new DownloadManager.Request(Uri.parse(download.getUrl()))
                 .addRequestHeader("User-Agent", download.getUserAgent())
@@ -753,6 +812,28 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
         SessionManager.getInstance().removeCurrentSession();
     }
 
+    private void shareCurrentUrl() {
+        final String url = getUrl();
+
+        final Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, url);
+
+        // Use title from webView if it's content matches the url
+        final IWebView webView = getWebView();
+        if (webView != null) {
+            final String contentUrl = webView.getUrl();
+            if (contentUrl != null && contentUrl.equals(url)) {
+                final String contentTitle = webView.getTitle();
+                shareIntent.putExtra(Intent.EXTRA_SUBJECT, contentTitle);
+            }
+        }
+
+        startActivity(Intent.createChooser(shareIntent, getString(R.string.share_dialog_title)));
+
+        TelemetryWrapper.shareEvent();
+    }
+
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
@@ -817,23 +898,32 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
                 break;
             }
 
-            case R.id.share: {
-                final String url = getUrl();
-                final Intent shareIntent = new Intent(Intent.ACTION_SEND);
-                shareIntent.setType("text/plain");
-                shareIntent.putExtra(Intent.EXTRA_TEXT, url);
-                // Use title from webView if it's content matches the url
+            case R.id.open_in_firefox_focus: {
+
+                sessionManager.moveCustomTabToRegularSessions(session);
+
                 final IWebView webView = getWebView();
                 if (webView != null) {
-                    final String contentUrl = webView.getUrl();
-                    if (contentUrl != null && contentUrl.equals(url)) {
-                        final String contentTitle = webView.getTitle();
-                        shareIntent.putExtra(Intent.EXTRA_SUBJECT, contentTitle);
-                    }
+                    webView.saveWebViewState(session);
                 }
-                startActivity(Intent.createChooser(shareIntent, getString(R.string.share_dialog_title)));
 
-                TelemetryWrapper.shareEvent();
+                final Intent intent = new Intent(getContext(), MainActivity.class);
+                intent.setAction(Intent.ACTION_MAIN);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+
+                TelemetryWrapper.openFullBrowser();
+
+                final Activity activity = getActivity();
+                if (activity != null) {
+                    activity.finish();
+                }
+
+                break;
+            }
+
+            case R.id.share: {
+                shareCurrentUrl();
                 break;
             }
 
@@ -891,13 +981,12 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
             }
 
             case R.id.help:
-                Intent helpIntent = InfoActivity.getHelpIntent(getActivity());
-                startActivity(helpIntent);
+                SessionManager.getInstance().createSession(Source.MENU, SupportUtils.HELP_URL);
                 break;
 
             case R.id.help_trackers:
-                Intent trackerHelpIntent = InfoActivity.getTrackerHelpIntent(getActivity());
-                startActivity(trackerHelpIntent);
+                SessionManager.getInstance().createSession(Source.MENU,
+                        SupportUtils.getSumoURLForTopic(getContext(), SupportUtils.SumoTopic.TRACKERS));
                 break;
 
             case R.id.add_to_homescreen:
@@ -910,6 +999,18 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
                 final String title = webView.getTitle();
                 showAddToHomescreenDialog(url, title);
                 break;
+            case R.id.security_info:
+                showSecurityPopUp();
+                break;
+            case R.id.add_to_pocket: {
+                Intent intent = new Intent(Intent.ACTION_SEND);
+                intent.setClassName("com.ideashower.readitlater.pro",
+                    "com.ideashower.readitlater.activity.AddActivity");
+                intent.setType("text/plain");
+                intent.putExtra(Intent.EXTRA_TEXT, getUrl());
+                startActivity(intent);
+                break;
+            }
 
             case R.id.open_with_chrome: {
                 final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(getUrl()));
@@ -927,18 +1028,7 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
                 startActivity(intent);
                 break;
             }
-
-            case R.id.add_to_pocket: {
-                Intent intent = new Intent(Intent.ACTION_SEND);
-                intent.setClassName("com.ideashower.readitlater.pro",
-                    "com.ideashower.readitlater.activity.AddActivity");
-                intent.setType("text/plain");
-                intent.putExtra(Intent.EXTRA_TEXT, getUrl());
-                startActivity(intent);
-                break;
-            }
-
-
+            
             default:
                 throw new IllegalArgumentException("Unhandled menu item in BrowserFragment");
         }
@@ -1027,6 +1117,25 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
             backgroundTransitionGroup = new TransitionDrawableGroup(
                     (TransitionDrawable) statusBar.getBackground()
             );
+        }
+    }
+
+    private void showSecurityPopUp() {
+        final PopupWindow securityPopup = PopupUtils.INSTANCE.createSecurityPopup(getContext(), session);
+        if (securityPopup != null) {
+            securityPopup.setOnDismissListener(new PopupWindow.OnDismissListener() {
+                @Override
+                public void onDismiss() {
+                    popupTint.setVisibility(View.GONE);
+                }
+            });
+            securityPopup.setAnimationStyle(android.R.style.Animation_Dialog);
+            securityPopup.setTouchable(true);
+            securityPopup.setFocusable(true);
+            securityPopup.setElevation(getResources().getDimension(R.dimen.menu_elevation));
+            final int offsetY = getContext().getResources().getDimensionPixelOffset(R.dimen.doorhanger_offsetY);
+            securityPopup.showAtLocation(urlBar, Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, offsetY);
+            popupTint.setVisibility(View.VISIBLE);
         }
     }
 

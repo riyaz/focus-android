@@ -12,7 +12,7 @@ import org.robolectric.RobolectricTestRunner
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.mozilla.focus.settings.ManualAddSearchEngineSettingsFragment.isValidSearchQueryURL
+import org.mozilla.focus.settings.ManualAddSearchEngineSettingsFragment.Companion.isValidSearchQueryURL
 
 @RunWith(RobolectricTestRunner::class)
 // This unit test is not running on an Android device. Allow me to use spaces in function names.
@@ -24,9 +24,9 @@ class SearchEngineValidationTest {
     }
 
     @Test
-    fun `URL using HTTP redirect is valid`() = withMockWebServer(responseWithStatus(301)) {
-        // Currently we accept redirects as valid. We might want to follow the redirect (Issue #1976)
-        assertTrue(isValidSearchQueryURL(it.rootUrl()))
+    fun `URL using HTTP redirect is invalid`() = withMockWebServer(responseWithStatus(301)) {
+        // We now follow redirects(Issue #1976). This test now asserts false.
+        assertFalse(isValidSearchQueryURL(it.rootUrl()))
     }
 
     @Test

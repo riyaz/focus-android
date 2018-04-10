@@ -8,8 +8,8 @@
   <string name="feedback_erase">Ваш историјат прегледања је обрисан.</string>
   <string name="search_hint">Претражи %1$s</string>
   <string name="menu_share">Подели…</string>
-  <string name="menu_open_with_default_browser">Отвори у %1$s-у</string>
-  <string name="menu_open_with_a_browser">Отвори у…</string>
+  <string name="menu_open_with_default_browser2">Отвори у %1$s</string>
+  <string name="menu_open_with_a_browser2">Отвори у…</string>
   <string name="menu_add_to_home_screen">Додај на почетни екран</string>
   <string name="menu_whats_new">Шта је ново</string>
   <string name="menu_settings">Поставке</string>
@@ -17,6 +17,7 @@
   <string name="menu_help">Помоћ</string>
   <string name="menu_rights">Ваша права</string>
   <string name="menu_trackers_blocked_title">Блокирани пратиоци</string>
+  <string name="menu_custom_tab_branding">Покреће га %1$s</string>
   <string name="share_dialog_title">Подели преко</string>
   <string name="notification_erase_text">Обришите историју прегледања</string>
   <string name="notification_action_open">Отвори</string>
@@ -29,17 +30,17 @@
   <string name="preference_search_engine_default">Подразумевано</string>
   <string name="preference_state_on">Укључено</string>
   <string name="preference_state_off">Искључено</string>
-  <string name="preference_subitem_autocomplete">URL ауто-завршетак</string>
-  <string name="preference_switch_autocomplete">Ауто-завршетак</string>
+  <string name="preference_subitem_autocomplete">URL aутоматско завршавање</string>
+  <string name="preference_switch_autocomplete">Аутоматско завршавање</string>
   <string name="preference_category_autocomplete_preinstalled">Подразумевана URL листа</string>
   <string name="preference_autocomplete_preinstalled_summary">Омогућите како би %1$s аутоматски завршавао преко 450 популарних URL адреса у адресној траци.</string>
-  <string name="preference_category_autocomplete_custom">Прилагођени URL</string>
-  <string name="preference_autocomplete_subitem_customlist">Прилагођени URLs</string>
+  <string name="preference_category_autocomplete_custom">Прилагођене URL адресе</string>
+  <string name="preference_autocomplete_subitem_customlist">Прилагођене URL адресе</string>
   <string name="preference_autocomplete_action_add">+ Додај URL</string>
-  <string name="preference_autocomplete_title_add">Додај прилагођени URL</string>
-  <string name="preference_autocomplete_title_remove">Уклони прилагођени URLs</string>
+  <string name="preference_autocomplete_title_add">Додај URL</string>
+  <string name="preference_autocomplete_title_remove">Уклони URL адресе</string>
   <string name="preference_autocomplete_learn_more">Сазнајте више</string>
-  <string name="preference_autocomplete_custom_summary">Додајте и управљајте аутоматски завршеним URLs адресама.</string>
+  <string name="preference_autocomplete_custom_summary">Додавање и управљање аутоматски завршеним URL адресама.</string>
   <string name="preference_autocomplete_add_title">URL за додавање</string>
   <string name="preference_autocomplete_add_hint">Налепите или унесите URL</string>
   <string name="preference_autocomplete_add_example">Пример: example.com</string>
@@ -74,7 +75,7 @@
   <string name="preference_privacy_notice">Обавештење о приватности</string>
   <string name="preference_about">О %1$s</string>
   <string name="preference_search_installed_search_engines">Инсталирани претраживачи</string>
-  <string name="preference_search_restore">Врати на подразумеване претраживаче</string>
+  <string name="preference_search_restore">Врати на подразумеване</string>
   <string name="preference_search_add2">+ Додај претраживач</string>
   <string name="preference_search_remove_title">Уклони претраживач</string>
   <string name="preference_search_remove">Уклони</string>
@@ -99,6 +100,7 @@
   <string name="accessibility_announcement_search">Додај претраживач</string>
   <string name="search_add_confirmation">Нови претраживач додат.</string>
   <string name="search_add_error_empty_name">Унесите име претраживача</string>
+  <string name="search_add_error_duplicate_name">Инсталирани претраживач већ користи то име.</string>
   <string name="search_add_error_empty_search">Унесите текст за претрагу</string>
   <string name="search_add_error_format">Проверите да ли се текст за претрагу поклапа са форматом примера</string>
   <string name="content_description_clear_input">Празно поље</string>
@@ -182,4 +184,11 @@
   <string name="your_rights_content3"><![CDATA["Немате никаква права нити лиценцу на заштитне знакове Mozilla фондације нити било шта слично, укључујући и Mozilla, Firefox или %1$s имена или логотипе. Додатне информације можете пронаћи "<a xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2" href="%2$s">&#1086;&#1074;&#1076;&#1077;</a>.]]></string>
   <string name="your_rights_content4"><![CDATA["Додатни изворни код за %1$s је доступан под различитим бесплатним и "<a xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2" href="%2$s">&#1083;&#1080;&#1094;&#1077;&#1085;&#1094;&#1072;&#1084;&#1072;</a>" отвореног кода."]]></string>
   <string name="your_rights_content5"><![CDATA["%1$s такође користи блок-листе пружане од стране Disconnect инкорпорације као одвојени и независни радови под "<a xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2" href="%2$s">GNU General Public License v3</a>" и доступним "<a xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2" href="%3$s">&#1086;&#1074;&#1076;&#1077;</a>.]]></string>
+  <string name="gv_prompt_username_hint">Корисничко име</string>
+  <string name="gv_prompt_password_hint">Лозинка</string>
+  <string name="gv_prompt_clear">Обриши</string>
+  <string name="security_popup_secure_connection">Безбедна веза</string>
+  <string name="security_popup_insecure_connection">Несигурна веза</string>
+  <string name="security_popup_security_verified">Проверио: %1$s</string>
+  <string name="site_security_icon_content_description">Безбедност сајта</string>
 </resources>

@@ -16,4 +16,5 @@
     <item name="open_with_chrome" type="id" />
     <item name="add_to_pocket" type="id" />
     <item name="add_to_inbox" type="id" />
+    <item name="open_in_firefox_focus" type="id" />
 </resources>

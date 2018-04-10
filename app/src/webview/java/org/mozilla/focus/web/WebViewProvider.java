@@ -14,6 +14,7 @@ import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
+import android.webkit.CookieManager;
 import android.webkit.WebSettings;
 import android.webkit.WebStorage;
 import android.webkit.WebView;
@@ -48,6 +49,9 @@ public class WebViewProvider {
      * This function must be called before WebView.loadUrl to avoid erasing current session data.
      */
     public static void performNewBrowserSessionCleanup() {
+        // If the app is closed in certain ways, WebView.cleanup will not get called and we don't clear cookies.
+        CookieManager.getInstance().removeAllCookies(null);
+
         // We run this on the main thread to guarantee it occurs before loadUrl so we don't erase current session data.
         final StrictMode.ThreadPolicy oldPolicy = StrictMode.allowThreadDiskWrites();
 
@@ -123,6 +127,13 @@ public class WebViewProvider {
     public static void applyAppSettings(Context context, WebSettings settings) {
         // We could consider calling setLoadsImagesAutomatically() here too (This will block images not loaded over the network too)
         settings.setBlockNetworkImage(Settings.getInstance(context).shouldBlockImages());
+        settings.setJavaScriptEnabled(!Settings.getInstance(context).shouldBlockJavaScript());
+    }
+
+    @SuppressLint("SetJavaScriptEnabled") // We explicitly want to enable JavaScript
+    public static void disableBlocking(WebSettings settings) {
+        settings.setBlockNetworkImage(false);
+        settings.setJavaScriptEnabled(true);
     }
 
     /**
